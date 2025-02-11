@@ -1,0 +1,146 @@
+The `.json` database created by `database_fetcher.py` follows this schema:
+
+### **Top-Level Structure**
+
+The database is stored as a JSON object with five primary keys:
+
+- `"pokemon"` → List of Pokémon species data.
+- `"abilities"` → List of Pokémon abilities.
+- `"items"` → List of items that Pokémon can hold or use.
+- `"moves"` → List of Pokémon moves.
+- `"natures"` → List of Pokémon natures affecting stats.
+
+---
+
+### **1. Pokémon Data (**``**)**
+
+Each Pokémon entry in the `"pokemon"` list contains:
+
+```json
+{
+  "dex_number": 1,
+  "name": "bulbasaur",
+  "variants": [
+    {
+      "name": "bulbasaur",
+      "types": ["grass", "poison"],
+      "base_stats": {
+        "hp": 45,
+        "attack": 49,
+        "defense": 49,
+        "special-attack": 65,
+        "special-defense": 65,
+        "speed": 45
+      },
+      "abilities": [
+        {
+          "name": "overgrow",
+          "description": "Powers up Grass-type moves when the Pokémon's HP is low."
+        }
+      ],
+      "image_url": "https://example.com/bulbasaur.png"
+    }
+  ],
+  "evolution_chain": [
+    {
+      "name": "bulbasaur",
+      "evolution_details": []
+    },
+    {
+      "name": "ivysaur",
+      "evolution_details": [
+        {
+          "trigger": "level-up",
+          "min_level": 16
+        }
+      ]
+    },
+    {
+      "name": "venusaur",
+      "evolution_details": [
+        {
+          "trigger": "level-up",
+          "min_level": 32
+        }
+      ]
+    }
+  ]
+}
+```
+
+- `"dex_number"` → National Dex ID.
+- `"name"` → Pokémon species name.
+- `"variants"` → Different forms of the species (with stats, abilities, and artwork).
+- `"evolution_chain"` → Evolution progression and conditions.
+
+---
+
+### **2. Abilities Data (**``**)**
+
+Each ability in the `"abilities"` list contains:
+
+```json
+{
+  "name": "overgrow",
+  "description": "Powers up Grass-type moves when the Pokémon's HP is low."
+}
+```
+
+- `"name"` → Ability name.
+- `"description"` → In-game effect of the ability.
+
+---
+
+### **3. Items Data (**``**)**
+
+Each item entry in the `"items"` list contains:
+
+```json
+{
+  "name": "leftovers",
+  "description": "A held item that gradually restores HP during battle."
+}
+```
+
+- `"name"` → Item name.
+- `"description"` → In-game effect of the item.
+
+---
+
+### **4. Moves Data (**``**)**
+
+Each move entry in the `"moves"` list contains:
+
+```json
+{
+  "name": "tackle",
+  "description": "A physical attack in which the user charges and slams into the target.",
+  "method": ["bulbasaur", "charmander", "squirtle"]
+}
+```
+
+- `"name"` → Move name.
+- `"description"` → Effect of the move.
+- `"method"` → List of Pokémon that can learn the move.
+
+---
+
+### **5. Natures Data (**``**)**
+
+Each nature entry in the `"natures"` list contains:
+
+```json
+{
+  "name": "adamant",
+  "increased_stat": "attack",
+  "decreased_stat": "special-attack"
+}
+```
+
+- `"name"` → Nature name.
+- `"increased_stat"` → Stat boosted by the nature.
+- `"decreased_stat"` → Stat lowered by the nature.
+
+---
+
+This structure ensures that all relevant competitive Pokémon data (species, moves, abilities, items, and natures) are available in an organized way. Let me know if you need any modifications or extensions to this schema! 🚀

@@ -1,0 +1,160 @@
+Below is an explanation of the structure of the final, merged database (combined_database.json) that will be used in your application. This document details each key and value so that a future developer can quickly understand the data layout.
+
+---
+
+## Overall Structure
+
+The **combined_database.json** is a JSON object with a single top‑level key:
+
+- **"pokemon"**: An array (list) of Pokémon objects. Each object in this array represents one Pokémon’s complete data—including its core details, its various variants, evolution information, and (if available) competitive sets from Gen 9.
+
+---
+
+## Pokémon Object
+
+Each object inside the `"pokemon"` array has the following keys:
+
+1. **"dex_number"**  
+   - **Type:** Integer  
+   - **Description:** The national Pokédex number of the Pokémon.
+
+2. **"name"**  
+   - **Type:** String  
+   - **Description:** The Pokémon’s name (typically in lowercase, e.g., `"bulbasaur"`, `"venusaur"`, `"sandslash"`).
+
+3. **"variants"**  
+   - **Type:** Array of objects  
+   - **Description:** A list of different forms or variants of the Pokémon (for example, a regular form and an Alolan or Mega variant).
+
+4. **"evolution_chain"**  
+   - **Type:** Array of objects  
+   - **Description:** Each object represents one stage in the Pokémon’s evolution line. These objects typically include the variant’s name and any details needed for evolution (like the level requirement or trigger).
+
+---
+
+## Variant Object
+
+Each object in the `"variants"` array represents a specific form of the Pokémon. Its keys are as follows:
+
+1. **"name"**  
+   - **Type:** String  
+   - **Description:** The name of the variant (for example, `"sandslash"`, `"sandslash-alola"`, `"charizard-mega"`).
+
+2. **"types"**  
+   - **Type:** Array of strings  
+   - **Description:** The list of types that the variant has (e.g., `["ground"]` or `["ice", "steel"]`).
+
+3. **"base_stats"**  
+   - **Type:** Object  
+   - **Description:** Contains the base stat values for the variant. Typical keys include:
+     - `"hp"`
+     - `"attack"`
+     - `"defense"`
+     - `"special-attack"`
+     - `"special-defense"`
+     - `"speed"`  
+     Each key maps to an integer value.
+
+4. **"abilities"**  
+   - **Type:** Array of objects  
+   - **Description:** Each ability is represented by an object containing:
+     - **"name"**: The name of the ability (string).
+     - **"description"**: A textual description of what the ability does (string).
+
+5. **"image_url"**  
+   - **Type:** String  
+   - **Description:** A URL linking to the official artwork or image of this Pokémon variant.
+
+6. **"sets"** *(Optional)*  
+   - **Type:** Object  
+   - **Description:**  
+     This key is added during the merge process if there are competitive sets available from gen9.json for that variant. It organizes competitive set information by format/tier.  
+     
+     **Structure of the "sets" Object:**
+     
+     - **Keys:** Competitive format/tier names (for example, `"lc"`, `"pu"`, `"nu"`, `"ou"`, etc.). Only the allowed formats (e.g., `anythinggoes, ubers, ubersuu, ou, uu, ru, nu, pu, zu, nfe, lc`) are present.
+     - **Values:** Each value is an object where:
+       - **Keys:** Are the names of the competitive sets or archetypes (for example, `"Sun Sweeper"`, `"Defensive"`, `"Rapid Spin"`, etc.).
+       - **Values:** Are objects containing the details for that set, which include:
+         - **"moves"**  
+           - **Type:** Array  
+           - **Description:** A list of moves. Each move may be a string or an array of strings if there are alternate options.
+         - **"ability"**  
+           - **Type:** String  
+           - **Description:** The recommended ability for the set.
+         - **"item"**  
+           - **Type:** String or Array of strings  
+           - **Description:** The held item(s) recommended for the set.
+         - **"nature"**  
+           - **Type:** String or Array of strings  
+           - **Description:** The recommended nature.
+         - **"ivs"**  
+           - **Type:** Object  
+           - **Description:** Contains Individual Values for the set (for example, `"atk": 0`). Keys are stat abbreviations.
+         - **"evs"**  
+           - **Type:** Object (or list of objects)  
+           - **Description:** Contains Effort Values, with keys like `"hp"`, `"spa"`, `"spe"`, etc., and integer values.
+         - **"teratypes"**  
+           - **Type:** String or Array of strings  
+           - **Description:** The suggested Tera Type(s) for the set.
+
+---
+
+## Example of a Variant Object with Competitive Sets
+
+Below is a representative snippet of a variant object from the combined_database.json after merging:
+
+```json
+{
+    "name": "sandslash",
+    "types": ["ground"],
+    "base_stats": {
+        "hp": 75,
+        "attack": 100,
+        "defense": 110,
+        "special-attack": 45,
+        "special-defense": 55,
+        "speed": 65
+    },
+    "abilities": [
+        { "name": "sand-veil", "description": "During a sandstorm, this Pokémon has 1.25× its evasion..." },
+        { "name": "sand-rush", "description": "This Pokémon's Speed is doubled during a sandstorm..." }
+    ],
+    "image_url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/28.png",
+    "sets": {
+        "pu": {
+            "Defensive Spinner": {
+                "moves": [
+                    "Rapid Spin",
+                    "Earthquake",
+                    "Knock Off",
+                    ["Spikes", "Stealth Rock"]
+                ],
+                "ability": "Sand Rush",
+                "item": ["Leftovers", "Rocky Helmet", "Heavy-Duty Boots"],
+                "nature": "Impish",
+                "ivs": { "hp": 0, "atk": 0, "def": 0, "spa": 0, "spd": 0, "spe": 0 },
+                "evs": { "hp": 248, "def": 252, "spd": 8 },
+                "teratypes": ["Ghost", "Water"]
+            }
+        },
+        "zu": { /* similar structure for the "zu" tier sets */ },
+        "nu": { /* similar structure for the "nu" tier sets */ }
+    }
+}
+```
+
+---
+
+## Summary
+
+- The **top-level** of the combined database is an object with one key: `"pokemon"`, which holds an array of Pokémon objects.
+- **Each Pokémon object** includes:
+  - `"dex_number"` (number),
+  - `"name"` (string),
+  - `"variants"` (array of variant objects),
+  - `"evolution_chain"` (array of evolution objects).
+- **Each variant object** includes core data such as `"name"`, `"types"`, `"base_stats"`, `"abilities"`, and `"image_url"`.  
+  Additionally, if competitive sets exist for that variant (from gen9.json), a `"sets"` object is added.
+- **The `"sets"` object** is organized by competitive format/tier keys (only allowed ones), and each of those maps to an object of set names with detailed set information (moves, ability, item, nature, IVs, EVs, and teratypes).
+

@@ -1,0 +1,119 @@
+Summary of the Database Outline:
+
+This JSON database is structured to provide Pokemon sets for various formats and tiers in Generation 9. It is organized hierarchically, starting with Pokemon names as the top-level keys.
+
+Structure:
+
+Pokemon Name (Top-Level Key): Each entry in the JSON is keyed by a Pokemon's name (e.g., "Bulbasaur", "Venusaur", "Charizard"). This is the primary access point to retrieve information about a specific Pokemon.
+
+Format/Tier (Second-Level Key): Under each Pokemon name, there are keys representing different formats or tiers (e.g., "lc" for Little Cup, "ou" for OverUsed, "vgc2024" for VGC 2024, "nationaldexmonotype" for National Dex Monotype). These keys categorize the sets based on the game format or competitive tier they are designed for.
+
+Set Name (Third-Level Key): Within each format/tier, there are keys representing specific set names or archetypes (e.g., "Sun Sweeper", "Defensive", "Shell Smash", "Choice Scarf", "Calm Mind"). These names describe the intended strategy or role of the Pokemon in that particular format/tier.
+
+Set Details (Value): The value associated with each set name is a dictionary containing the details of the Pokemon set. This dictionary includes the following keys:
+
+moves: A list of moves the Pokemon should use. Moves can be single strings or lists of strings (representing move choices).
+
+ability: The Pokemon's ability.
+
+item: The item the Pokemon should hold. Can be a single string or a list of strings (representing item choices).
+
+nature: The Pokemon's nature. Can be a single string or a list of strings (representing nature choices).
+
+ivs: A dictionary specifying Individual Values (IVs) for different stats.
+
+evs: A dictionary or list of dictionaries specifying Effort Values (EVs) for different stats.
+
+teratypes: The Tera Type(s) the Pokemon should use. Can be a single string or a list of strings (representing Tera Type choices).
+
+Data Types:
+
+Keys: Strings (Pokemon names, format/tier names, set names, set detail names).
+
+Values:
+
+Strings: For simple values like ability, nature, item, teratypes, and individual moves.
+
+Lists: For moves (when there are move choices), items (when there are item choices), natures (when there are nature choices), and EVs (when there are multiple EV spreads).
+
+Dictionaries: For set details, IVs, and EVs.
+
+Integers: For IV values (e.g., atk: 0).
+
+Access Points:
+
+Here's a breakdown of how to access different parts of the database:
+
+Accessing Sets for a Specific Pokemon:
+
+Use the Pokemon's name as the key to access its entry in the main JSON object.
+
+data["Venusaur"]
+content_copy
+download
+Use code with caution.
+Python
+
+Accessing Sets for a Specific Format/Tier of a Pokemon:
+
+First, access the Pokemon's entry using its name.
+
+Then, use the format/tier name as the key to access the sets for that format/tier.
+
+data["Venusaur"]["pu"]
+content_copy
+download
+Use code with caution.
+Python
+
+Accessing a Specific Set of a Pokemon in a Format/Tier:
+
+First, access the Pokemon's entry using its name.
+
+Then, access the format/tier entry using the format/tier name.
+
+Finally, use the set name as the key to access the specific set details.
+
+data["Venusaur"]["pu"]["Offensive"]
+content_copy
+download
+Use code with caution.
+Python
+
+Accessing Details within a Set:
+
+Follow steps 1-3 to access the specific set details.
+
+Then, use the detail name (e.g., "moves", "ability", "item", "nature", "evs", "teratypes") as the key to access the desired information.
+
+data["Venusaur"]["pu"]["Offensive"]["moves"]
+data["Venusaur"]["pu"]["Offensive"]["item"]
+data["Venusaur"]["pu"]["Offensive"]["evs"]
+content_copy
+download
+Use code with caution.
+Python
+
+Accessing Specific Moves, Items, Natures, EVs, or Tera Types (when choices are available):
+
+If the value for "moves", "item", "nature", or "teratypes" is a list (representing choices), you can access individual elements using list indexing (e.g., [0], [1], etc.).
+
+data["Venusaur"]["pu"]["Offensive"]["moves"][0] # Access the first move choice
+data["Venusaur"]["pu"]["Offensive"]["item"][1] # Access the second item choice
+content_copy
+download
+Use code with caution.
+Python
+
+Accessing IVs and EVs:
+
+These are dictionaries themselves. Access specific IV or EV values using their stat names as keys (e.g., "atk", "spa", "spe", "hp", "def", "spd").
+
+data["Venusaur"]["pu"]["Offensive"]["ivs"]["atk"]
+data["Venusaur"]["pu"]["Offensive"]["evs"]["spa"]
+content_copy
+download
+Use code with caution.
+Python
+
+In summary, the access points are nested keys, allowing you to drill down from Pokemon name to format/tier, then to set name, and finally to specific set details like moves, ability, items, EVs, IVs, and Tera Types.
