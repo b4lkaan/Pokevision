@@ -14,28 +14,50 @@ body {
     background-color: #f0f2f6;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-.title {
-    font-size: 48px;
-    font-weight: 700;
-    color: #ff6f61;
-    text-align: center;
-    margin-top: 0.5em;
+.subtitle {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-top: 1em;
 }
-.logo {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    width: 150px;
+.stat-bar {
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    height: 20px;
+    margin-bottom: 10px;
+}
+.stat-fill {
+    height: 20px;
+    border-radius: 5px;
+}
+.container {
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.expander {
+    background-color: #fafafa;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
 }
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
 
 # -------------------------------------
-# Title & Logo
+# Title & Logo using st.image and columns
 # -------------------------------------
-st.image("final_logo.png", use_column_width=False, width=150)
-st.markdown("<div class='title'>PokeVision</div>", unsafe_allow_html=True)
+# Create three columns and use the middle column to center the logo and title.
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    st.image("final_logo.png", width=150)
+    st.markdown(
+        "<h1 style='color: #ff6f61; font-size: 48px; text-align: center;'>PokeVision</h1>",
+        unsafe_allow_html=True,
+    )
 
 # -------------------------------------
 # Data Loading
@@ -54,8 +76,6 @@ selected_regions = st.sidebar.multiselect("Select Region(s)", options=all_region
 # -------------------------------------
 # Prepopulate Search Field if Jumping via Evolution Chain
 # -------------------------------------
-# When a user clicks an evolution chain button, we store its name under "selected_evo".
-# Then, we use that as the default value for the search input.
 if "selected_evo" in st.session_state:
     default_search_query = st.session_state.pop("selected_evo")
     if "search_query" in st.session_state:
@@ -63,7 +83,6 @@ if "selected_evo" in st.session_state:
 else:
     default_search_query = ""
 
-# Main search input with a default value (for evolution jumps)
 search_query = st.text_input(
     "Enter Pokémon Name or National Dex Number:",
     value=default_search_query,
@@ -73,14 +92,14 @@ search_query = st.text_input(
 
 selected_pokemon = None
 if search_query:
-    # First, filter Pokémon by the sidebar selections.
+    # Filter Pokémon based on sidebar selections.
     filtered_pokemon = [
         p for p in data.get("pokemon", [])
         if ((not selected_types) or any(t in p.get("types", []) for t in selected_types))
         and ((not selected_regions) or (p.get("region") in selected_regions))
     ]
     
-    # --- Numeric Search: If the query is a number, try to match dex_number exactly ---
+    # --- Numeric Search: If query is a number, match dex_number exactly ---
     if search_query.isdigit():
         selected_pokemon = next(
             (p for p in filtered_pokemon if str(p.get("dex_number", "")) == search_query),
@@ -92,12 +111,11 @@ if search_query:
         # --- Fuzzy Matching on Names ---
         names_list = [p["name"] for p in filtered_pokemon]
         suggestions = process.extract(search_query, names_list, scorer=fuzz.partial_ratio, limit=10)
-        # Only include suggestions above a given threshold.
+        # Filter suggestions based on a minimum score threshold.
         suggestions = [match for match, score, _ in suggestions if score >= 50]
 
         if suggestions:
             selected_name = st.selectbox("Select Pokémon", options=suggestions, key="selected_pokemon")
-            # Ensure we pick the Pokémon from the filtered list.
             selected_pokemon = next(
                 (p for p in filtered_pokemon if p["name"].lower() == selected_name.lower()),
                 None
@@ -127,7 +145,7 @@ if selected_pokemon:
         else:
             variant = variants[0]
             
-        # Display Pokémon Image with alt text for accessibility.
+        # Display Pokémon image using st.image with use_container_width.
         st.image(
             variant["image_url"],
             caption=variant["name"].capitalize(),
@@ -166,12 +184,10 @@ if selected_pokemon:
         st.markdown('<div class="subtitle">Competitive Sets</div>', unsafe_allow_html=True)
         sets_data = variant.get("sets", {})
         if sets_data:
-            # Iterate over each competitive tier (e.g., LC, OU, NU, etc.)
             for tier, sets_dict in sets_data.items():
                 st.markdown(f"### {tier.upper()}")
                 for set_name, set_data in sets_dict.items():
                     with st.expander(set_name):
-                        # Display Moves with an icon
                         st.markdown("**Moves:** ⚔️")
                         moves = set_data.get("moves", [])
                         if moves:
@@ -182,7 +198,6 @@ if selected_pokemon:
                                     st.write(move)
                         else:
                             st.write("N/A")
-                        # Display Ability, Item, Nature with emoji icons
                         st.markdown(f"**Ability:** ⭐ {set_data.get('ability', 'N/A')}")
                         st.markdown(f"**Item:** 🎒 {set_data.get('item', 'N/A')}")
                         st.markdown(f"**Nature:** 🌿 {set_data.get('nature', 'N/A')}")
@@ -200,7 +215,6 @@ if selected_pokemon:
         evolution_chain = selected_pokemon.get("evolution_chain", [])
         if evolution_chain:
             st.write("Click on a Pokémon to load its details:")
-            # Display clickable buttons in a row.
             cols = st.columns(len(evolution_chain))
             for i, evo in enumerate(evolution_chain):
                 with cols[i]:
@@ -212,7 +226,7 @@ if selected_pokemon:
                             st.rerun()
                         except AttributeError:
                             try:
-                                st._rerun()  # fallback for older versions
+                                st._rerun()  # Fallback for older versions
                             except Exception:
                                 st.write("Please refresh the page.")
                                 st.stop()
