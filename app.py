@@ -14,46 +14,18 @@ body {
     background-color: #f0f2f6;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-.title-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
 .title {
     font-size: 48px;
     font-weight: 700;
     color: #ff6f61;
     text-align: center;
+    margin-top: 0.5em;
 }
-.subtitle {
-    font-size: 24px;
-    font-weight: 600;
-    color: #333;
-    margin-top: 1em;
-}
-.stat-bar {
-    background-color: #e0e0e0;
-    border-radius: 5px;
-    height: 20px;
-    margin-bottom: 10px;
-}
-.stat-fill {
-    height: 20px;
-    border-radius: 5px;
-}
-.container {
-    padding: 20px;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-}
-.expander {
-    background-color: #fafafa;
-    border-radius: 8px;
-    padding: 10px;
-    margin-top: 10px;
+.logo {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 150px;
 }
 </style>
 """
@@ -62,11 +34,8 @@ st.markdown(custom_css, unsafe_allow_html=True)
 # -------------------------------------
 # Title & Logo
 # -------------------------------------
-col1, col2 = st.columns([1, 5])
-with col1:
-    st.image("final_logo.png", width=200)
-with col2:
-    st.markdown("<div class='title'>PokeVision</div>", unsafe_allow_html=True)
+st.image("final_logo.png", use_column_width=False, width=150)
+st.markdown("<div class='title'>PokeVision</div>", unsafe_allow_html=True)
 
 # -------------------------------------
 # Data Loading
