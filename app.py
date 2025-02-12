@@ -48,6 +48,18 @@ body {
     flex_direction: column;
     align_items: center;
 }
+.suggestion-button {
+    background-color: #f0f2f6;
+    border: 1px solid #d4d4d4;
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    cursor: pointer;
+}
+.suggestion-button:hover {
+    background-color: #e0e0e0;
+}
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
@@ -59,7 +71,7 @@ col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.markdown("<div class='logo-title-container'>", unsafe_allow_html=True)
     st.image("final_logo.png", width=500)
-   
+
 
 # -------------------------------------
 # Data Loading
@@ -79,34 +91,34 @@ selected_regions = st.sidebar.multiselect("Select Region(s)", options=all_region
 # Session State and Search Query
 # -------------------------------------
 if "search_query" not in st.session_state:
-    st.session_state["search_query"] = "" # Initialize search_query in session state
+    st.session_state["search_query"] = ""
 
 if "selected_evo" in st.session_state:
-    st.session_state["search_query"] = st.session_state.pop("selected_evo") # Update search_query from evo chain
+    st.session_state["search_query"] = st.session_state.pop("selected_evo")
 
 current_search_query = st.text_input(
     "Enter Pokémon Name or National Dex Number:",
-    value=st.session_state["search_query"], # Use session state for text input value
-    key="search_input", # Fixed key for text input
+    value=st.session_state["search_query"],
+    key="search_input",
     help="Type part of the Pokémon name or its Dex number."
 )
 
-# Update session state search_query on text input change
 st.session_state["search_query"] = current_search_query
-search_query = st.session_state["search_query"] # sync local variable with session state
-
+search_query = st.session_state["search_query"]
 
 # -------------------------------------
-# Pokémon Filtering and Selection (Direct Filtering)
+# Pokémon Filtering and Selection (Real-time Suggestions)
 # -------------------------------------
 selected_pokemon = None
-if search_query:
-    filtered_pokemon = [
-        p for p in data.get("pokemon", [])
-        if ((not selected_types) or any(t in p.get("types", []) for t in selected_types))
-        and ((not selected_regions) or (p.get("region") in selected_regions))
-    ]
+suggestions = [] # Initialize suggestions list
 
+filtered_pokemon = [
+    p for p in data.get("pokemon", [])
+    if ((not selected_types) or any(t in p.get("types", []) for t in selected_types))
+    and ((not selected_regions) or (p.get("region") in selected_regions))
+]
+
+if search_query:
     if search_query.isdigit():
         selected_pokemon = next(
             (p for p in filtered_pokemon if str(p.get("dex_number", "")) == search_query),
@@ -115,27 +127,29 @@ if search_query:
         if selected_pokemon is None:
             st.error("No Pokémon found with that dex number!")
     else:
-        # --- Direct Filtering (NO SELECTBOX) ---
-        # If we came from the evolution chain, search_query will be the exact name.
         exact_matches = [p for p in filtered_pokemon if p["name"].lower() == search_query.lower()]
         if exact_matches:
-            selected_pokemon = exact_matches[0]  # Take the first exact match.
-
-        # --- Fuzzy Matching (Only if no exact match) ---
+            selected_pokemon = exact_matches[0]
         else:
             names_list = [p["name"] for p in filtered_pokemon]
-            suggestions = process.extract(search_query, names_list, scorer=fuzz.partial_ratio, limit=10)
-            suggestions = [match for match, score, _ in suggestions if score >= 50]
+            fuzzy_suggestions = process.extract(search_query, names_list, scorer=fuzz.partial_ratio, limit=5) # Limit to 5 suggestions
+            suggestions = [match for match, score, _ in fuzzy_suggestions if score >= 50]
 
-            if suggestions:
-                selected_name = st.selectbox("Select Pokémon", options=[s[0] for s in suggestions], key="selected_pokemon")
-                selected_pokemon = next(
-                    (p for p in filtered_pokemon if p["name"].lower() == selected_name.lower()),
-                    None
-                )
-            else:
-                st.error("No Pokémon found with that query!")
-else:
+
+if suggestions and not selected_pokemon: # Display suggestions only if there are suggestions and no exact match
+    st.markdown("<div style='margin-bottom: 10px;'>Suggestions:</div>", unsafe_allow_html=True)
+    suggestion_cols = st.columns(len(suggestions)) # Use columns for layout
+    for i, suggestion_tuple in enumerate(suggestions): # suggestions is a list of tuples now
+        suggestion_name = suggestion_tuple[0]
+        with suggestion_cols[i]:
+            if st.button(suggestion_name.capitalize(), key=f"suggestion_{i}",  use_container_width=True, ):
+                st.session_state["search_query"] = suggestion_name
+                st.rerun() # Rerun to update with selected suggestion
+
+elif search_query and not selected_pokemon and not suggestions: # Error message if no pokemon and no suggestions
+    if not search_query.isdigit(): # Only show error for name searches, dex number error already shown
+        st.error("No Pokémon found with that query!")
+elif not search_query:
     st.info("Start by typing a Pokémon name or Dex number above.")
 
 
