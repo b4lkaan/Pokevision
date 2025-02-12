@@ -34,7 +34,7 @@ body {
     padding: 20px;
     background-color: white;
     border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+    box_shadow: 0px 4px 10px rgba(0,0,0,0.1);
     margin-bottom: 20px;
 }
 .expander {
@@ -43,21 +43,23 @@ body {
     padding: 10px;
     margin-top: 10px;
 }
+.logo-title-container {
+    display: flex;
+    flex_direction: column;
+    align_items: center;
+}
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
 
 # -------------------------------------
-# Title & Logo using st.image and columns
+# Title & Logo
 # -------------------------------------
-# Create three columns and use the middle column to center the logo and title.
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.image("final_logo.png", width=150)
-    st.markdown(
-        "<h1 style='color: #ff6f61; font-size: 48px; text-align: center;'>PokeVision</h1>",
-        unsafe_allow_html=True,
-    )
+    st.markdown("<div class='logo-title-container'>", unsafe_allow_html=True)
+    st.image("final_logo.png", width=500)
+   
 
 # -------------------------------------
 # Data Loading
@@ -74,32 +76,37 @@ all_regions = get_unique_regions(data)
 selected_regions = st.sidebar.multiselect("Select Region(s)", options=all_regions)
 
 # -------------------------------------
-# Prepopulate Search Field if Jumping via Evolution Chain
+# Session State and Search Query
 # -------------------------------------
-if "selected_evo" in st.session_state:
-    default_search_query = st.session_state.pop("selected_evo")
-    if "search_query" in st.session_state:
-        del st.session_state["search_query"]
-else:
-    default_search_query = ""
+if "search_query" not in st.session_state:
+    st.session_state["search_query"] = "" # Initialize search_query in session state
 
-search_query = st.text_input(
+if "selected_evo" in st.session_state:
+    st.session_state["search_query"] = st.session_state.pop("selected_evo") # Update search_query from evo chain
+
+current_search_query = st.text_input(
     "Enter Pokémon Name or National Dex Number:",
-    value=default_search_query,
-    key="search_query",
+    value=st.session_state["search_query"], # Use session state for text input value
+    key="search_input", # Fixed key for text input
     help="Type part of the Pokémon name or its Dex number."
 )
 
+# Update session state search_query on text input change
+st.session_state["search_query"] = current_search_query
+search_query = st.session_state["search_query"] # sync local variable with session state
+
+
+# -------------------------------------
+# Pokémon Filtering and Selection (Direct Filtering)
+# -------------------------------------
 selected_pokemon = None
 if search_query:
-    # Filter Pokémon based on sidebar selections.
     filtered_pokemon = [
         p for p in data.get("pokemon", [])
         if ((not selected_types) or any(t in p.get("types", []) for t in selected_types))
         and ((not selected_regions) or (p.get("region") in selected_regions))
     ]
-    
-    # --- Numeric Search: If query is a number, match dex_number exactly ---
+
     if search_query.isdigit():
         selected_pokemon = next(
             (p for p in filtered_pokemon if str(p.get("dex_number", "")) == search_query),
@@ -108,34 +115,39 @@ if search_query:
         if selected_pokemon is None:
             st.error("No Pokémon found with that dex number!")
     else:
-        # --- Fuzzy Matching on Names ---
-        names_list = [p["name"] for p in filtered_pokemon]
-        suggestions = process.extract(search_query, names_list, scorer=fuzz.partial_ratio, limit=10)
-        # Filter suggestions based on a minimum score threshold.
-        suggestions = [match for match, score, _ in suggestions if score >= 50]
+        # --- Direct Filtering (NO SELECTBOX) ---
+        # If we came from the evolution chain, search_query will be the exact name.
+        exact_matches = [p for p in filtered_pokemon if p["name"].lower() == search_query.lower()]
+        if exact_matches:
+            selected_pokemon = exact_matches[0]  # Take the first exact match.
 
-        if suggestions:
-            selected_name = st.selectbox("Select Pokémon", options=suggestions, key="selected_pokemon")
-            selected_pokemon = next(
-                (p for p in filtered_pokemon if p["name"].lower() == selected_name.lower()),
-                None
-            )
+        # --- Fuzzy Matching (Only if no exact match) ---
         else:
-            st.error("No Pokémon found with that query!")
+            names_list = [p["name"] for p in filtered_pokemon]
+            suggestions = process.extract(search_query, names_list, scorer=fuzz.partial_ratio, limit=10)
+            suggestions = [match for match, score, _ in suggestions if score >= 50]
+
+            if suggestions:
+                selected_name = st.selectbox("Select Pokémon", options=[s[0] for s in suggestions], key="selected_pokemon")
+                selected_pokemon = next(
+                    (p for p in filtered_pokemon if p["name"].lower() == selected_name.lower()),
+                    None
+                )
+            else:
+                st.error("No Pokémon found with that query!")
 else:
     st.info("Start by typing a Pokémon name or Dex number above.")
 
+
 # -------------------------------------
-# Display Pokémon Details if Found
+# Display Pokémon Details
 # -------------------------------------
 if selected_pokemon:
-    # Pokémon Header (Name & Dex Number)
     st.markdown(
         f'<div class="subtitle">#{selected_pokemon["dex_number"]} - {selected_pokemon["name"].capitalize()}</div>',
         unsafe_allow_html=True,
     )
-    
-    # Variant Selection (if multiple variants exist)
+
     variants = selected_pokemon.get("variants", [])
     if variants:
         if len(variants) > 1:
@@ -144,8 +156,7 @@ if selected_pokemon:
             variant = next((v for v in variants if v["name"] == selected_variant_name), variants[0])
         else:
             variant = variants[0]
-            
-        # Display Pokémon image using st.image with use_container_width.
+
         st.image(
             variant["image_url"],
             caption=variant["name"].capitalize(),
@@ -154,11 +165,9 @@ if selected_pokemon:
     else:
         st.error("No variant information available.")
 
-    # Main Content Container with Tabs
     st.markdown('<div class="container">', unsafe_allow_html=True)
     tabs = st.tabs(["Base Stats", "Abilities", "Competitive Sets", "Evolution Chain"])
 
-    # --- Base Stats Tab (with Radar Chart) ---
     with tabs[0]:
         st.markdown('<div class="subtitle">Base Stats</div>', unsafe_allow_html=True)
         base_stats = variant.get("base_stats", {})
@@ -168,7 +177,6 @@ if selected_pokemon:
         else:
             st.info("No base stats available.")
 
-    # --- Abilities Tab ---
     with tabs[1]:
         st.markdown('<div class="subtitle">Abilities</div>', unsafe_allow_html=True)
         abilities = variant.get("abilities", [])
@@ -179,7 +187,6 @@ if selected_pokemon:
         else:
             st.info("No abilities available.")
 
-    # --- Competitive Sets Tab (Enhanced Styling) ---
     with tabs[2]:
         st.markdown('<div class="subtitle">Competitive Sets</div>', unsafe_allow_html=True)
         sets_data = variant.get("sets", {})
@@ -209,7 +216,6 @@ if selected_pokemon:
         else:
             st.info("No competitive sets available for this variant.")
 
-    # --- Evolution Chain Tab (Clickable Nodes) ---
     with tabs[3]:
         st.markdown('<div class="subtitle">Evolution Chain</div>', unsafe_allow_html=True)
         evolution_chain = selected_pokemon.get("evolution_chain", [])
@@ -220,8 +226,6 @@ if selected_pokemon:
                 with cols[i]:
                     if st.button(evo["name"].capitalize(), key=f"evo_{i}"):
                         st.session_state["selected_evo"] = evo["name"]
-                        if "search_query" in st.session_state:
-                            del st.session_state["search_query"]
                         try:
                             st.rerun()
                         except AttributeError:
